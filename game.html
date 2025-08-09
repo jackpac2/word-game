@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Word Game with Definitions Panel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-wrap: wrap;
+    }
+    #game-container {
+      flex: 1 1 400px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 300px;
+    }
+    #side-panels {
+      width: 320px;
+      background: white;
+      border-left: 2px solid #ddd;
+      padding: 20px;
+      box-sizing: border-box;
+      color: #333;
+      font-size: 14px;
+      min-width: 280px;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    h1, h2 {
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+    #letters {
+      font-size: 2rem;
+      letter-spacing: 10px;
+      background: white;
+      padding: 15px 25px;
+      border-radius: 5px;
+      border: 2px solid #ccc;
+      margin-bottom: 15px;
+      min-width: 150px;
+      text-align: center;
+      user-select: none;
+    }
+    input {
+      padding: 10px;
+      font-size: 1rem;
+      margin-bottom: 10px;
+      width: 150px;
+      text-align: center;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      background: #4caf50;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      margin: 0 5px 10px 0;
+      user-select: none;
+    }
+    #score {
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+    #message {
+      margin-top: 10px;
+      font-weight: 600;
+      min-height: 1.5em;
+      color: #222;
+    }
+    #rules-panel ul {
+      padding-left: 20px;
+    }
+    #found-words-panel {
+      margin-top: 20px;
+      flex-grow: 1;
+      overflow-y: auto;
+    }
+    .word-entry {
+      border-bottom: 1px solid #ddd;
+      padding: 8px 0;
+    }
+    .word-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+    .word-title {
+      font-weight: 700;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .definition {
+      margin-top: 5px;
+      font-size: 0.9rem;
+      color: #444;
+      white-space: pre-wrap;
+    }
+    .toggle-btn {
+      background: #2196f3;
+      border: none;
+      color: white;
+      border-radius: 3px;
+      padding: 3px 8px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    /* Responsive: stack on smaller screens */
+    @media (max-width: 700px) {
+      body {
+        flex-direction: column;
+      }
+      #side-panels {
+        width: 100%;
+        border-left: none;
+        border-top: 2px solid #ddd;
+        height: auto;
+        max-height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="game-container">
+    <h1>Subset Letter Word Game</h1>
+    <div id="letters">---</div>
+    <input type="text" id="guess" placeholder="Your word guess" autocomplete="off" />
+    <div>
+      <button id="checkBtn">Check Word</button>
+      <button id="newBtn">Generate Letters</button>
+    </div>
+    <div id="score">Score: 0</div>
+    <div id="message"></div>
+  </div>
+
+  <div id="side-panels">
+    <div id="rules-panel">
+      <h2>Game Rules</h2>
+      <ul>
+        <li>Random letters (3 to 6) will be generated.</li>
+        <li>You can guess any English word made <strong>only</strong> from those letters.</li>
+        <li>You don't need to use all letters.</li>
+        <li>Points awarded based on word length:
+          <ul>
+            <li>2 or 3 letters: 1 point</li>
+            <li>4 letters: 2 points</li>
+            <li>5 letters: 3 points</li>
+            <li>6 letters: 4 points</li>
+          </ul>
+        </li>
+        <li>Words validated via an online dictionary.</li>
+        <li>Found words appear below with definitions.</li>
+      </ul>
+    </div>
+
+    <div id="found-words-panel">
+      <h2>Found Words</h2>
+      <div id="found-words-list">
+        <!-- Found words will appear here -->
+      </div>
+    </div>
+  </div>
+
+<script>
+  let scrambledLetters = "";
+  let score = 0;
+  const foundWords = new Map(); // Store words & their definitions (or null if not fetched)
+
+  // Generate random letters of length between 3 and 6
+  function randomLetters() {
+    const letters = "abcdefghijklmnopqrstuvwxyz";
+    const length = 3 + Math.floor(Math.random() * 4); // 3 to 6 letters
+    let result = "";
+    for (let i = 0; i < length; i++) {
+      result += letters.charAt(Math.floor(Math.random() * letters.length));
+    }
+    return result;
+  }
+
+  // Check if guess only uses letters from scrambledLetters (counts respected)
+  function usesOnlyLetters(guess, letters) {
+    const letterCount = {};
+    for (const l of letters) {
+      letterCount[l] = (letterCount[l] || 0) + 1;
+    }
+    for (const l of guess) {
+      if (!letterCount[l]) {
+        return false;
+      }
+      letterCount[l]--;
+    }
+    return true;
+  }
+
+  // Check if a word is valid English word using dictionaryapi.dev
+  async function isValidEnglishWord(word) {
+    try {
+      const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+      if (!response.ok) return false;
+      const data = await response.json();
+      return Array.isArray(data) && data.length > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  // Fetch definition for a word from dictionaryapi.dev
+  async function fetchDefinition(word) {
+    try {
+      const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+      if (!response.ok) return null;
+      const data = await response.json();
+      // Extract first definition from the first meaning:
+      if (Array.isArray(data) && data.length > 0) {
+        const meanings = data[0].meanings;
+        if (meanings && meanings.length > 0 && meanings[0].definitions && meanings[0].definitions.length > 0) {
+          return meanings[0].definitions[0].definition;
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  // Calculate points based on word length
+  function calculatePoints(word) {
+    const len = word.length;
+    if (len === 2 || len === 3) return 1;
+    if (len === 4) return 2;
+    if (len === 5) return 3;
+    if (len === 6) return 4;
+    return 0;
+  }
+
+  // Render found words list
+  function renderFoundWords() {
+    const container = document.getElementById("found-words-list");
+    container.innerHTML = "";
+
+    if (foundWords.size === 0) {
+      container.textContent = "No words found yet.";
+      return;
+    }
+
+    foundWords.forEach((def, word) => {
+      const entry = document.createElement("div");
+      entry.className = "word-entry";
+
+      const header = document.createElement("div");
+      header.className = "word-header";
+
+      const title = document.createElement("div");
+      title.className = "word-title";
+      title.textContent = word.toUpperCase();
+
+      const toggleBtn = document.createElement("button");
+      toggleBtn.className = "toggle-btn";
+      toggleBtn.textContent = "Show Definition";
+
+      const definitionDiv = document.createElement("div");
+      definitionDiv.className = "definition";
+      definitionDiv.style.display = "none";
+
+      toggleBtn.addEventListener("click", async () => {
+        if (definitionDiv.style.display === "none") {
+          // Show definition
+          if (def === null) {
+            toggleBtn.textContent = "Loading...";
+            const fetchedDef = await fetchDefinition(word);
+            foundWords.set(word, fetchedDef);
+            definitionDiv.textContent = fetchedDef || "No definition found.";
+            toggleBtn.textContent = "Hide Definition";
+          } else {
+            definitionDiv.textContent = def;
+            toggleBtn.textContent = "Hide Definition";
+          }
+          definitionDiv.style.display = "block";
+        } else {
+          // Hide definition
+          definitionDiv.style.display = "none";
+          toggleBtn.textContent = "Show Definition";
+        }
+      });
+
+      header.appendChild(title);
+      header.appendChild(toggleBtn);
+      entry.appendChild(header);
+      entry.appendChild(definitionDiv);
+
+      container.appendChild(entry);
+    });
+  }
+
+  async function checkWord() {
+    const guessInput = document.getElementById("guess");
+    const guess = guessInput.value.toLowerCase().trim();
+    const messageEl = document.getElementById("message");
+
+    if (!guess) {
+      alert("Please enter a word.");
+      return;
+    }
+
+    if (!usesOnlyLetters(guess, scrambledLetters)) {
+      messageEl.textContent = "Your word uses letters not in the jumble.";
+      return;
+    }
+
+    messageEl.textContent = "Checking word validity...";
+
+    const valid = await isValidEnglishWord(guess);
+    if (valid) {
+      const points = calculatePoints(guess);
+      if (points === 0) {
+        messageEl.textContent = "Word length too short for points.";
+      } else {
+        score += points;
+        document.getElementById("score").textContent = "Score: " + score;
+        messageEl.textContent = `✅ "${guess.toUpperCase()}" is valid! You earned ${points} point${points > 1 ? "s" : ""}!`;
+
+        if (!foundWords.has(guess)) {
+          foundWords.set(guess, null);
+          renderFoundWords();
+        }
+
+        generateLetters();
+      }
+    } else {
+      messageEl.textContent = `❌ "${guess.toUpperCase()}" is NOT a valid English word. Try again.`;
+    }
+    guessInput.value = "";
+  }
+
+  function generateLetters() {
+    scrambledLetters = randomLetters();
+    document.getElementById("letters").textContent = scrambledLetters.toUpperCase();
+    document.getElementById("guess").value = "";
+    document.getElementById("message").textContent = "";
+  }
+
+  document.getElementById("checkBtn").addEventListener("click", checkWord);
+  document.getElementById("newBtn").addEventListener("click", generateLetters);
+
+  // Start the game with some letters
+  generateLetters();
+  renderFoundWords();
+</script>
+
+</body>
+</html>
