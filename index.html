@@ -652,7 +652,7 @@
     <div class="game-bg game-bg-1">✏️</div>
     <div class="game-bg game-bg-2">🔠</div>
     
-    <h1>WORD WIZARDS</h1>
+    <h1>GINO'S WORD WIZARDS</h1>
     <p style="text-align: center; margin-bottom: 20px; font-size: 1.2rem; color: var(--dark);">Unleash your word magic!</p>
     
     <!-- Player Area -->
@@ -752,6 +752,7 @@
   const MONEY_INTERVAL = 300000; // 5 minutes in milliseconds
   const foundWords = new Map(); // Store words & their definitions (or null if not fetched)
 
+  
   // ---------- Timer and Money Logic ----------
   function startTimer() {
     const storedStartTime = localStorage.getItem('wordgame_startTime');
@@ -1353,5 +1354,6 @@
 
   window.addEventListener('unload', stopTimer);
 </script>
+
 </body>
 </html>
