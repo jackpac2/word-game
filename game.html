@@ -1,98 +1,346 @@
 <!DOCTYPE html>
-<html lang="en" >
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Word Game with Definitions Panel</title>
+  <title>Word Wizards - The Magical Letter Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
+    :root {
+      --primary: #6c5ce7;
+      --secondary: #a29bfe;
+      --accent: #fd79a8;
+      --light: #f8f9fa;
+      --dark: #2d3436;
+      --success: #00b894;
+      --warning: #fdcb6e;
+      --danger: #d63031;
+    }
+    
+    * {
+      box-sizing: border-box;
       margin: 0;
-      height: 100vh;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      margin: 0;
+      min-height: 100vh;
       display: flex;
       flex-wrap: wrap;
+      color: var(--dark);
+      overflow-x: hidden;
     }
+    
+    /* Game Container */
     #game-container {
-      flex: 1 1 400px;
-      padding: 20px;
+      flex: 1 1 60%;
+      padding: 30px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       min-width: 300px;
+      position: relative;
+      overflow: hidden;
     }
+    
+    /* Decorative elements */
+    .game-bg {
+      position: absolute;
+      opacity: 0.1;
+      z-index: 0;
+    }
+    
+    .game-bg-1 {
+      top: -50px;
+      left: -50px;
+      font-size: 200px;
+      color: var(--primary);
+    }
+    
+    .game-bg-2 {
+      bottom: -50px;
+      right: -50px;
+      font-size: 200px;
+      color: var(--accent);
+      transform: rotate(180deg);
+    }
+    
+    /* Side Panels */
     #side-panels {
-      width: 320px;
+      width: 400px;
       background: white;
-      border-left: 2px solid #ddd;
-      padding: 20px;
-      box-sizing: border-box;
-      color: #333;
-      font-size: 14px;
-      min-width: 280px;
+      border-left: 4px dashed var(--secondary);
+      padding: 25px;
+      box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+      color: var(--dark);
+      font-size: 16px;
+      min-width: 300px;
       display: flex;
       flex-direction: column;
       height: 100vh;
       overflow-y: auto;
+      position: relative;
+      z-index: 1;
     }
+    
+    /* Headers */
     h1, h2 {
+      font-family: 'Fredoka One', cursive;
       margin-top: 0;
-      margin-bottom: 10px;
-    }
-    #letters {
-      font-size: 2rem;
-      letter-spacing: 10px;
-      background: white;
-      padding: 15px 25px;
-      border-radius: 5px;
-      border: 2px solid #ccc;
       margin-bottom: 15px;
-      min-width: 150px;
+      color: var(--primary);
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      color: var(--primary);
+      position: relative;
+      display: inline-block;
+    }
+    
+    h1:after {
+      content: "";
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+    
+    h2 {
+      font-size: 1.8rem;
+      color: var(--secondary);
+    }
+    
+    /* Letters Display */
+    #letters {
+      font-size: 3rem;
+      letter-spacing: 15px;
+      background: white;
+      padding: 20px 40px;
+      border-radius: 15px;
+      border: 4px dashed var(--primary);
+      margin: 30px 0;
+      min-width: 300px;
       text-align: center;
       user-select: none;
+      font-family: 'Fredoka One', cursive;
+      color: var(--dark);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      position: relative;
+      z-index: 1;
+      transition: all 0.3s ease;
     }
+    
+    #letters:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 25px rgba(0,0,0,0.15);
+    }
+    
+    /* Input and Buttons */
     input {
-      padding: 10px;
-      font-size: 1rem;
-      margin-bottom: 10px;
-      width: 150px;
+      padding: 15px;
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+      width: 250px;
       text-align: center;
+      border: 3px solid var(--secondary);
+      border-radius: 50px;
+      outline: none;
+      font-family: 'Nunito', sans-serif;
+      transition: all 0.3s ease;
     }
+    
+    input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.3);
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
     button {
-      padding: 10px 20px;
-      font-size: 1rem;
+      padding: 15px 30px;
+      font-size: 1.1rem;
       cursor: pointer;
-      background: #4caf50;
       border: none;
       color: white;
-      border-radius: 5px;
-      margin: 0 5px 10px 0;
+      border-radius: 50px;
+      margin: 0;
       user-select: none;
+      font-family: 'Fredoka One', cursive;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      position: relative;
+      overflow: hidden;
     }
+    
+    button:after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.5);
+      opacity: 0;
+      border-radius: 100%;
+      transform: scale(1, 1) translate(-50%);
+      transform-origin: 50% 50%;
+    }
+    
+    button:focus:not(:active)::after {
+      animation: ripple 1s ease-out;
+    }
+    
+    @keyframes ripple {
+      0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+      }
+      100% {
+        transform: scale(20, 20);
+        opacity: 0;
+      }
+    }
+    
+    button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+    
+    button:active {
+      transform: translateY(1px);
+    }
+    
+    #checkBtn {
+      background: var(--success);
+    }
+    
+    #newBtn {
+      background: var(--accent);
+    }
+    
+    .toggle-btn {
+      background: var(--primary);
+      padding: 8px 15px;
+      font-size: 0.9rem;
+    }
+    
+    /* Score and Message */
     #score {
-      margin-top: 15px;
-      font-weight: bold;
-      font-size: 1.2rem;
-    }
-    #message {
-      margin-top: 10px;
-      font-weight: 600;
-      min-height: 1.5em;
-      color: #222;
-    }
-    #rules-panel ul {
-      padding-left: 20px;
-    }
-    #found-words-panel {
       margin-top: 20px;
+      font-weight: bold;
+      font-size: 1.5rem;
+      background: white;
+      padding: 15px 30px;
+      border-radius: 50px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+    }
+    
+    #score:before {
+      content: "⭐";
+      margin-right: 10px;
+      font-size: 1.2em;
+    }
+    
+    #message {
+      margin-top: 20px;
+      font-weight: 700;
+      min-height: 1.5em;
+      color: var(--dark);
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      max-width: 80%;
+    }
+    
+    /* Player Area */
+    #player-area {
+      margin-bottom: 20px;
+      text-align: center;
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 500px;
+    }
+    
+    #playerNameInput {
+      width: 70%;
+      margin-right: 10px;
+    }
+    
+    #setNameBtn {
+      background: var(--warning);
+      color: var(--dark);
+      padding: 10px 20px;
+    }
+    
+    #current-player {
+      margin-top: 15px;
+      font-size: 1rem;
+      color: var(--dark);
+    }
+    
+    #playerDisplay {
+      font-weight: 700;
+      color: var(--primary);
+    }
+    
+    /* Rules Panel */
+    #rules-panel {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    #rules-panel ul {
+      padding-left: 25px;
+    }
+    
+    #rules-panel li {
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+    
+    /* Found Words Panel */
+    #found-words-panel {
       flex-grow: 1;
       overflow-y: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
+    
     .word-entry {
-      border-bottom: 1px solid #ddd;
-      padding: 8px 0;
+      border-bottom: 2px dotted var(--secondary);
+      padding: 15px 0;
+      transition: all 0.3s ease;
     }
+    
+    .word-entry:hover {
+      background: rgba(162, 155, 254, 0.1);
+    }
+    
     .word-header {
       display: flex;
       align-items: center;
@@ -100,39 +348,116 @@
       cursor: pointer;
       user-select: none;
     }
+    
     .word-title {
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 1.2rem;
       text-transform: uppercase;
       letter-spacing: 1px;
+      color: var(--primary);
+      font-family: 'Fredoka One', cursive;
     }
+    
     .definition {
-      margin-top: 5px;
-      font-size: 0.9rem;
-      color: #444;
+      margin-top: 10px;
+      font-size: 1rem;
+      color: var(--dark);
       white-space: pre-wrap;
+      line-height: 1.5;
+      background: rgba(162, 155, 254, 0.1);
+      padding: 10px;
+      border-radius: 8px;
+      animation: fadeIn 0.5s ease;
     }
-    .toggle-btn {
-      background: #2196f3;
-      border: none;
-      color: white;
-      border-radius: 3px;
-      padding: 3px 8px;
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Pagination */
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+    
+    .pagination button {
+      padding: 8px 15px;
       font-size: 0.9rem;
-      cursor: pointer;
-      user-select: none;
     }
-    /* Responsive: stack on smaller screens */
-    @media (max-width: 700px) {
+    
+    /* Animations */
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    .bounce {
+      animation: bounce 0.5s ease infinite;
+    }
+    
+    @keyframes confetti {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+    }
+    
+    .confetti {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      background: var(--accent);
+      opacity: 1;
+      animation: confetti 2s ease forwards;
+      z-index: 1000;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 900px) {
       body {
         flex-direction: column;
       }
-      #side-panels {
+      
+      #game-container, #side-panels {
         width: 100%;
-        border-left: none;
-        border-top: 2px solid #ddd;
         height: auto;
-        max-height: 300px;
+      }
+      
+      #side-panels {
+        border-left: none;
+        border-top: 4px dashed var(--secondary);
+      }
+      
+      #letters {
+        font-size: 2.5rem;
+        letter-spacing: 10px;
+        padding: 15px 30px;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+    }
+    
+    @media (max-width: 500px) {
+      #letters {
+        font-size: 2rem;
+        letter-spacing: 8px;
+        padding: 10px 20px;
+        min-width: 250px;
+      }
+      
+      input {
+        width: 80%;
+      }
+      
+      .button-group {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      button {
+        width: 80%;
       }
     }
   </style>
@@ -140,47 +465,58 @@
 <body>
 
   <div id="game-container">
-    <h1>Subset Letter Word Game</h1>
-    <!-- Player / Login area (paste inside #game-container) -->
-<div id="player-area" style="margin-bottom:12px; text-align:center;">
-  <input type="text" id="playerNameInput" placeholder="Enter username (or leave blank for guest)" style="width:220px; padding:8px;"/>
-  <button id="setNameBtn" style="padding:8px 12px; margin-left:6px;">Set Name</button>
-  <div id="current-player" style="margin-top:8px; font-size:0.9rem; color:#333;">
-    Playing as: <span id="playerDisplay" style="font-weight:700;">Guest</span>
-  </div>
-</div>
-    <div id="letters">---</div>
-    <input type="text" id="guess" placeholder="Your word guess" autocomplete="off" />
-    <div>
-      <button id="checkBtn">Check Word</button>
-      <button id="newBtn">Generate Letters</button>
+    <div class="game-bg game-bg-1">✏️</div>
+    <div class="game-bg game-bg-2">🔠</div>
+    
+    <h1>WORD WIZARDS</h1>
+    <p style="text-align: center; margin-bottom: 20px; font-size: 1.2rem; color: var(--dark);">Unleash your word magic!</p>
+    
+    <!-- Player Area -->
+    <div id="player-area">
+      <div style="display: flex; align-items: center; justify-content: center;">
+        <input type="text" id="playerNameInput" placeholder="Enter wizard name..." />
+        <button id="setNameBtn">Cast Name Spell</button>
+      </div>
+      <div id="current-player">
+        Playing as: <span id="playerDisplay">Guest Wizard</span>
+      </div>
     </div>
+    
+    <!-- Game Area -->
+    <div id="letters">---</div>
+    <input type="text" id="guess" placeholder="Cast your word spell..." autocomplete="off" />
+    
+    <div class="button-group">
+      <button id="checkBtn">Check Word</button>
+      <button id="newBtn">New Letters</button>
+    </div>
+    
     <div id="score">Score: 0</div>
     <div id="message"></div>
   </div>
 
   <div id="side-panels">
     <div id="rules-panel">
-      <h2>Game Rules</h2>
+      <h2>Magical Rules</h2>
       <ul>
-        <li>Random letters (3 to 6) will be generated.</li>
-        <li>You can guess any English word made <strong>only</strong> from those letters.</li>
-        <li>You don't need to use all letters.</li>
-        <li>Points awarded based on word length:
-          <ul>
-            <li>2 or 3 letters: 1 point</li>
+        <li>✨ 3 to 6 magical letters will appear</li>
+        <li>🔮 Create words using <strong>only</strong> these letters</li>
+        <li>⚡ You don't need to use all letters</li>
+        <li>🏆 Points based on word length:
+          <ul style="margin-top: 8px;">
+            <li>2-3 letters: 1 point</li>
             <li>4 letters: 2 points</li>
             <li>5 letters: 3 points</li>
             <li>6 letters: 4 points</li>
           </ul>
         </li>
-        <li>Words validated via an online dictionary.</li>
-        <li>Found words appear below with definitions.</li>
+        <li>📖 Words checked against a magical dictionary</li>
+        <li>📚 Found words appear below with their secrets</li>
       </ul>
     </div>
 
     <div id="found-words-panel">
-      <h2>Found Words</h2>
+      <h2>Spellbook</h2>
       <div id="found-words-list">
         <!-- Found words will appear here -->
       </div>
@@ -194,54 +530,81 @@
   let score = 0;
   const foundWords = new Map(); // Store words & their definitions (or null if not fetched)
 
-  // ---------- Player Identification (Phase 1) ----------
-function generateGuestId() {
-  // simple guest id — e.g., Guest-7f3a
-  return 'Guest-' + Math.random().toString(36).slice(2, 6);
-}
-
-function getStoredPlayerName() {
-  return localStorage.getItem('wordgame_playerName') || null;
-}
-
-function setStoredPlayerName(name) {
-  if (!name || !name.trim()) {
-    // If blank, create a guest id and store it
-    name = generateGuestId();
+  // ---------- Player Identification ----------
+  function generateGuestId() {
+    const wizardNames = [
+      "Merlin", "Gandalf", "Dumbledore", "Hermione", "Morgana", 
+      "Harry", "Luna", "Neville", "Voldemort", "Snape",
+      "Minerva", "Albus", "Sirius", "Lupin", "Tonks"
+    ];
+    return wizardNames[Math.floor(Math.random() * wizardNames.length)] + "-" + 
+           Math.random().toString(36).slice(2, 5);
   }
-  localStorage.setItem('wordgame_playerName', name);
-  updatePlayerDisplay();
-  return name;
-}
 
-function updatePlayerDisplay() {
-  const player = getStoredPlayerName() || generateGuestId();
-  document.getElementById('playerDisplay').textContent = player;
-  // Make sure input shows the current name (optional)
-  document.getElementById('playerNameInput').value = player.startsWith('Guest-') ? '' : player;
-}
+  function getStoredPlayerName() {
+    return localStorage.getItem('wordgame_playerName') || null;
+  }
 
-// Initialize player on load
-(function initPlayer() {
-  // If no stored player, create guest id
-  if (!getStoredPlayerName()) {
-    setStoredPlayerName(generateGuestId());
-  } else {
+  function setStoredPlayerName(name) {
+    if (!name || !name.trim()) {
+      name = generateGuestId();
+    }
+    localStorage.setItem('wordgame_playerName', name);
     updatePlayerDisplay();
+    return name;
   }
 
-  // Wire up button
-  document.getElementById('setNameBtn').addEventListener('click', () => {
-    const input = document.getElementById('playerNameInput').value.trim();
-    // If user typed nothing, we'll treat as guest (generate)
-    const nameToStore = input || generateGuestId();
-    setStoredPlayerName(nameToStore);
-    // Optional toast/message
-    const messageEl = document.getElementById('message');
-    if (messageEl) messageEl.textContent = `Playing as: ${nameToStore}`;
-  });
-})();
+  function updatePlayerDisplay() {
+    const player = getStoredPlayerName() || generateGuestId();
+    document.getElementById('playerDisplay').textContent = player;
+    document.getElementById('playerNameInput').value = player.includes('-') ? '' : player;
+  }
 
+  // Initialize player on load
+  (function initPlayer() {
+    if (!getStoredPlayerName()) {
+      setStoredPlayerName(generateGuestId());
+    } else {
+      updatePlayerDisplay();
+    }
+
+    document.getElementById('setNameBtn').addEventListener('click', () => {
+      const input = document.getElementById('playerNameInput').value.trim();
+      const nameToStore = input || generateGuestId();
+      setStoredPlayerName(nameToStore);
+      
+      // Show magical name change effect
+      const messageEl = document.getElementById('message');
+      messageEl.textContent = `✨ You are now ${nameToStore} the Word Wizard! ✨`;
+      messageEl.style.color = 'var(--accent)';
+      messageEl.style.fontWeight = 'bold';
+      
+      // Create confetti effect
+      createConfetti(30);
+    });
+  })();
+
+  // Confetti effect
+  function createConfetti(count) {
+    for (let i = 0; i < count; i++) {
+      const confetti = document.createElement('div');
+      confetti.className = 'confetti';
+      confetti.style.left = Math.random() * 100 + 'vw';
+      confetti.style.backgroundColor = [
+        'var(--primary)', 'var(--secondary)', 'var(--accent)', 
+        'var(--success)', 'var(--warning)'
+      ][Math.floor(Math.random() * 5)];
+      confetti.style.width = Math.random() * 10 + 5 + 'px';
+      confetti.style.height = Math.random() * 10 + 5 + 'px';
+      confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+      document.body.appendChild(confetti);
+      
+      // Remove confetti after animation
+      setTimeout(() => {
+        confetti.remove();
+      }, 2000);
+    }
+  }
 
   // Generate random letters of length between 3 and 6
   function randomLetters() {
@@ -282,33 +645,32 @@ function updatePlayerDisplay() {
   }
 
   // Fetch definition for a word from dictionaryapi.dev
- async function fetchDefinition(word) {
-  try {
-    const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
-    if (!response.ok) return null;
-    const data = await response.json();
+  async function fetchDefinition(word) {
+    try {
+      const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+      if (!response.ok) return null;
+      const data = await response.json();
 
-    if (Array.isArray(data) && data.length > 0) {
-      const meanings = data[0].meanings;
-      let defs = [];
+      if (Array.isArray(data) && data.length > 0) {
+        const meanings = data[0].meanings;
+        let defs = [];
 
-      // Loop through meanings until we have 2 definitions
-      for (let meaning of meanings) {
-        for (let defObj of meaning.definitions) {
-          defs.push(defObj.definition);
+        // Loop through meanings until we have 2 definitions
+        for (let meaning of meanings) {
+          for (let defObj of meaning.definitions) {
+            defs.push(defObj.definition);
+            if (defs.length === 2) break;
+          }
           if (defs.length === 2) break;
         }
-        if (defs.length === 2) break;
+
+        return defs.length > 0 ? defs : null;
       }
-
-      return defs.length > 0 ? defs : null;
+      return null;
+    } catch {
+      return null;
     }
-    return null;
-  } catch {
-    return null;
   }
-}
-
 
   // Calculate points based on word length
   function calculatePoints(word) {
@@ -322,131 +684,155 @@ function updatePlayerDisplay() {
 
   // Render found words list
   function renderFoundWords() {
-  const container = document.getElementById("found-words-list");
-  container.innerHTML = "";
+    const container = document.getElementById("found-words-list");
+    container.innerHTML = "";
 
-  if (foundWords.size === 0) {
-    container.textContent = "No words found yet.";
-    return;
-  }
+    if (foundWords.size === 0) {
+      container.textContent = "Your spellbook is empty. Cast some word spells!";
+      return;
+    }
 
-  const wordsArray = Array.from(foundWords.entries());
-  const totalPages = Math.ceil(wordsArray.length / wordsPerPage);
-  const startIndex = (currentPage - 1) * wordsPerPage;
-  const pageWords = wordsArray.slice(startIndex, startIndex + wordsPerPage);
+    const wordsArray = Array.from(foundWords.entries());
+    const totalPages = Math.ceil(wordsArray.length / wordsPerPage);
+    const startIndex = (currentPage - 1) * wordsPerPage;
+    const pageWords = wordsArray.slice(startIndex, startIndex + wordsPerPage);
 
-  pageWords.forEach(([word, def]) => {
-    const entry = document.createElement("div");
-    entry.className = "word-entry";
+    pageWords.forEach(([word, def]) => {
+      const entry = document.createElement("div");
+      entry.className = "word-entry";
 
-    const header = document.createElement("div");
-    header.className = "word-header";
+      const header = document.createElement("div");
+      header.className = "word-header";
 
-    const title = document.createElement("div");
-    title.className = "word-title";
-    title.textContent = word.toUpperCase();
+      const title = document.createElement("div");
+      title.className = "word-title";
+      title.textContent = word.toUpperCase();
 
-    const toggleBtn = document.createElement("button");
-    toggleBtn.className = "toggle-btn";
-    toggleBtn.textContent = "Show Definition";
+      const toggleBtn = document.createElement("button");
+      toggleBtn.className = "toggle-btn";
+      toggleBtn.textContent = "Reveal Secrets";
 
-    const definitionDiv = document.createElement("div");
-    definitionDiv.className = "definition";
-    definitionDiv.style.display = "none";
+      const definitionDiv = document.createElement("div");
+      definitionDiv.className = "definition";
+      definitionDiv.style.display = "none";
 
-    toggleBtn.addEventListener("click", async () => {
-      if (definitionDiv.style.display === "none") {
-        if (def === null) {
-          toggleBtn.textContent = "Loading...";
-          const fetchedDef = await fetchDefinition(word);
-          foundWords.set(word, fetchedDef);
-          if (fetchedDef && fetchedDef.length > 0) {
-            definitionDiv.innerHTML = fetchedDef
-              .map((d, i) => `<b>Definition ${i + 1}:</b> ${d}`)
-              .join("<br>");
+      toggleBtn.addEventListener("click", async () => {
+        if (definitionDiv.style.display === "none") {
+          if (def === null) {
+            toggleBtn.textContent = "Consulting the ancient texts...";
+            const fetchedDef = await fetchDefinition(word);
+            foundWords.set(word, fetchedDef);
+            if (fetchedDef && fetchedDef.length > 0) {
+              definitionDiv.innerHTML = fetchedDef
+                .map((d, i) => `<b>Secret ${i + 1}:</b> ${d}`)
+                .join("<br>");
+            } else {
+              definitionDiv.textContent = "This spell's secrets are lost to time.";
+            }
+            toggleBtn.textContent = "Hide Secrets";
           } else {
-            definitionDiv.textContent = "No definitions found.";
+            definitionDiv.innerHTML = def
+              .map((d, i) => `<b>Secret ${i + 1}:</b> ${d}`)
+              .join("<br>");
+            toggleBtn.textContent = "Hide Secrets";
           }
-          toggleBtn.textContent = "Hide Definition";
+          definitionDiv.style.display = "block";
         } else {
-          definitionDiv.innerHTML = def
-            .map((d, i) => `<b>Definition ${i + 1}:</b> ${d}`)
-            .join("<br>");
-          toggleBtn.textContent = "Hide Definition";
+          definitionDiv.style.display = "none";
+          toggleBtn.textContent = "Reveal Secrets";
         }
-        definitionDiv.style.display = "block";
-      } else {
-        definitionDiv.style.display = "none";
-        toggleBtn.textContent = "Show Definition";
-      }
+      });
+
+      header.appendChild(title);
+      header.appendChild(toggleBtn);
+      entry.appendChild(header);
+      entry.appendChild(definitionDiv);
+
+      container.appendChild(entry);
     });
 
-    header.appendChild(title);
-    header.appendChild(toggleBtn);
-    entry.appendChild(header);
-    entry.appendChild(definitionDiv);
+    // Pagination controls (only if enough words)
+    if (wordsArray.length > wordsPerPage) {
+      const paginationDiv = document.createElement("div");
+      paginationDiv.className = "pagination";
 
-    container.appendChild(entry);
-  });
+      const prevBtn = document.createElement("button");
+      prevBtn.textContent = "◄ Previous Spells";
+      prevBtn.disabled = currentPage === 1;
+      prevBtn.onclick = () => {
+        currentPage--;
+        renderFoundWords();
+      };
 
-  // Pagination controls (only if enough words)
-  if (wordsArray.length >= wordsPerPage) {
-    const paginationDiv = document.createElement("div");
-    paginationDiv.style.marginTop = "10px";
-    paginationDiv.style.display = "flex";
-    paginationDiv.style.justifyContent = "space-between";
+      const pageInfo = document.createElement("span");
+      pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+      pageInfo.style.margin = "0 10px";
+      pageInfo.style.display = "flex";
+      pageInfo.style.alignItems = "center";
 
-    const prevBtn = document.createElement("button");
-    prevBtn.textContent = "Previous";
-    prevBtn.disabled = currentPage === 1;
-    prevBtn.onclick = () => {
-      currentPage--;
-      renderFoundWords();
-    };
+      const nextBtn = document.createElement("button");
+      nextBtn.textContent = "Next Spells ►";
+      nextBtn.disabled = currentPage === totalPages;
+      nextBtn.onclick = () => {
+        currentPage++;
+        renderFoundWords();
+      };
 
-    const nextBtn = document.createElement("button");
-    nextBtn.textContent = "Next";
-    nextBtn.disabled = currentPage === totalPages;
-    nextBtn.onclick = () => {
-      currentPage++;
-      renderFoundWords();
-    };
-
-    paginationDiv.appendChild(prevBtn);
-    paginationDiv.appendChild(nextBtn);
-    container.appendChild(paginationDiv);
+      paginationDiv.appendChild(prevBtn);
+      paginationDiv.appendChild(pageInfo);
+      paginationDiv.appendChild(nextBtn);
+      container.appendChild(paginationDiv);
+    }
   }
-}
-
-
 
   async function checkWord() {
     const guessInput = document.getElementById("guess");
     const guess = guessInput.value.toLowerCase().trim();
     const messageEl = document.getElementById("message");
+    const lettersEl = document.getElementById("letters");
 
     if (!guess) {
-      alert("Please enter a word.");
+      messageEl.textContent = "The spellbook demands a word!";
+      messageEl.style.color = 'var(--danger)';
       return;
     }
 
     if (!usesOnlyLetters(guess, scrambledLetters)) {
-      messageEl.textContent = "Your word uses letters not in the jumble.";
+      messageEl.textContent = "Your spell uses forbidden letters!";
+      messageEl.style.color = 'var(--danger)';
+      
+      // Shake animation for wrong letters
+      lettersEl.style.animation = 'shake 0.5s';
+      setTimeout(() => {
+        lettersEl.style.animation = '';
+      }, 500);
       return;
     }
 
-    messageEl.textContent = "Checking word validity...";
+    messageEl.textContent = "Consulting the dictionary spirits...";
+    messageEl.style.color = 'var(--dark)';
 
     const valid = await isValidEnglishWord(guess);
     if (valid) {
       const points = calculatePoints(guess);
       if (points === 0) {
-        messageEl.textContent = "Word length too short for points.";
+        messageEl.textContent = "The spell is too weak for points.";
+        messageEl.style.color = 'var(--warning)';
       } else {
         score += points;
-        document.getElementById("score").textContent = "Score: " + score;
-        messageEl.textContent = `✅ "${guess.toUpperCase()}" is valid! You earned ${points} point${points > 1 ? "s" : ""}!`;
-        const playerName = getStoredPlayerName() || 'Guest';
+        document.getElementById("score").textContent = `Score: ${score}`;
+        messageEl.innerHTML = `✨ <strong>"${guess.toUpperCase()}"</strong> is a powerful spell! You earned ${points} magic point${points > 1 ? "s" : ""}! ✨`;
+        messageEl.style.color = 'var(--success)';
+        
+        // Bounce animation for score
+        const scoreEl = document.getElementById("score");
+        scoreEl.classList.add('bounce');
+        setTimeout(() => {
+          scoreEl.classList.remove('bounce');
+        }, 1000);
+        
+        // Confetti for success
+        createConfetti(20);
 
         if (!foundWords.has(guess)) {
           foundWords.set(guess, null);
@@ -456,7 +842,8 @@ function updatePlayerDisplay() {
         generateLetters();
       }
     } else {
-      messageEl.textContent = `❌ "${guess.toUpperCase()}" is NOT a valid English word. Try again.`;
+      messageEl.textContent = `The spell "${guess.toUpperCase()}" is not in the ancient texts!`;
+      messageEl.style.color = 'var(--danger)';
     }
     guessInput.value = "";
   }
@@ -466,10 +853,30 @@ function updatePlayerDisplay() {
     document.getElementById("letters").textContent = scrambledLetters.toUpperCase();
     document.getElementById("guess").value = "";
     document.getElementById("message").textContent = "";
+    document.getElementById("message").style.color = '';
   }
 
+  // Add shake animation for CSS
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+      20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Event listeners
   document.getElementById("checkBtn").addEventListener("click", checkWord);
   document.getElementById("newBtn").addEventListener("click", generateLetters);
+  
+  // Also check word on Enter key
+  document.getElementById("guess").addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+      checkWord();
+    }
+  });
 
   // Start the game with some letters
   generateLetters();
