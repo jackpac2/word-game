@@ -370,6 +370,13 @@
       font-size: 0.9rem;
     }
     
+    #toggleRulesBtn {
+      background: var(--primary);
+      padding: 8px 15px;
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+    }
+    
     /* Score and Message */
     #score {
       margin-top: 20px;
@@ -443,6 +450,10 @@
       box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
     
+    #rules-content {
+      display: none;
+    }
+    
     #rules-panel ul {
       padding-left: 25px;
     }
@@ -459,6 +470,8 @@
       border-radius: 15px;
       margin-bottom: 20px;
       box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      flex-grow: 1;
+      overflow-y: auto;
     }
     
     /* Feedback Panel */
@@ -688,24 +701,27 @@
   <div id="side-panels">
     <div id="rules-panel">
       <h2>Magical Rules</h2>
-      <ul>
-        <li>✨ 3 to 6 magical letters will appear</li>
-        <li>🔮 Create words using <strong>only</strong> these letters</li>
-        <li>⚡ You don't need to use all letters</li>
-        <li>🏆 Points based on word length:
-          <ul style="margin-top: 8px;">
-            <li>2-3 letters: 1 point</li>
-            <li>4 letters: 2 points</li>
-            <li>5 letters: 3 points</li>
-            <li>6 letters: 4 points</li>
-          </ul>
-        </li>
-        <li>💰 Earn 1 dollar every 5 minutes of casting spells</li>
-        <li>🔍 Spend 1 dollar for a hint (reveals a possible word)</li>
-        <li>📖 Words checked against a magical dictionary</li>
-        <li>📚 Found words appear below with their secrets</li>
-        <li>📢 Share your magical ideas with the feedback spell!</li>
-      </ul>
+      <button id="toggleRulesBtn" aria-expanded="false" aria-controls="rules-content">Reveal Rules Spell</button>
+      <div id="rules-content">
+        <ul>
+          <li>✨ 3 to 6 magical letters will appear</li>
+          <li>🔮 Create words using <strong>only</strong> these letters</li>
+          <li>⚡ You don't need to use all letters</li>
+          <li>🏆 Points based on word length:
+            <ul style="margin-top: 8px;">
+              <li>2-3 letters: 1 point</li>
+              <li>4 letters: 2 points</li>
+              <li>5 letters: 3 points</li>
+              <li>6 letters: 4 points</li>
+            </ul>
+          </li>
+          <li>💰 Earn 1 dollar every 5 minutes of casting spells</li>
+          <li>🔍 Spend 1 dollar for a hint (reveals a possible word)</li>
+          <li>📖 Words checked against a magical dictionary</li>
+          <li>📚 Found words appear below with their secrets</li>
+          <li>📢 Share your magical ideas with the feedback spell!</li>
+        </ul>
+      </div>
     </div>
 
     <div id="found-words-panel">
@@ -738,12 +754,10 @@
 
   // ---------- Timer and Money Logic ----------
   function startTimer() {
-    // Load or initialize game start time
     const storedStartTime = localStorage.getItem('wordgame_startTime');
     gameStartTime = storedStartTime ? parseInt(storedStartTime, 10) : Date.now();
     localStorage.setItem('wordgame_startTime', gameStartTime);
 
-    // Calculate any missed money intervals since last session
     const currentTime = Date.now();
     const timeSinceStart = currentTime - gameStartTime;
     const missedIntervals = Math.floor(timeSinceStart / MONEY_INTERVAL);
@@ -751,19 +765,16 @@
       money += missedIntervals;
       localStorage.setItem('wordgame_money', money);
       document.getElementById('money-display').textContent = money;
-      // Adjust start time to account for awarded intervals
       gameStartTime += missedIntervals * MONEY_INTERVAL;
       localStorage.setItem('wordgame_startTime', gameStartTime);
     }
 
-    // Start timer
     timerInterval = setInterval(() => {
       const currentTime = Date.now();
       elapsedTime = (currentTime - gameStartTime) % MONEY_INTERVAL;
       updateTimerDisplay();
 
-      // Check if 5 minutes have passed
-      if (elapsedTime >= MONEY_INTERVAL - 1000) { // Within 1 second of interval
+      if (elapsedTime >= MONEY_INTERVAL - 1000) {
         money += 1;
         const moneyEl = document.getElementById('money-display');
         moneyEl.textContent = money;
@@ -772,7 +783,6 @@
         localStorage.setItem('wordgame_money', money);
         console.log(`Money earned: ${money} dollars after ${Math.floor((currentTime - gameStartTime) / 60000)} minutes`);
 
-        // Reset timer for next interval
         gameStartTime += MONEY_INTERVAL;
         localStorage.setItem('wordgame_startTime', gameStartTime);
         elapsedTime = 0;
@@ -795,13 +805,11 @@
     }
   }
 
-  // Load money from localStorage
   function loadMoney() {
     money = parseInt(localStorage.getItem('wordgame_money') || '0', 10);
     document.getElementById('money-display').textContent = money;
   }
 
-  // Save money to localStorage
   function saveMoney() {
     localStorage.setItem('wordgame_money', money);
   }
@@ -880,6 +888,23 @@
     }, 3000);
   }
 
+  // ---------- Rules Toggle Logic ----------
+  function toggleRules() {
+    const rulesContent = document.getElementById('rules-content');
+    const toggleBtn = document.getElementById('toggleRulesBtn');
+    const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
+    
+    if (isExpanded) {
+      rulesContent.style.display = 'none';
+      toggleBtn.setAttribute('aria-expanded', 'false');
+      toggleBtn.textContent = 'Reveal Rules Spell';
+    } else {
+      rulesContent.style.display = 'block';
+      toggleBtn.setAttribute('aria-expanded', 'true');
+      toggleBtn.textContent = 'Hide Rules Spell';
+    }
+  }
+
   // ---------- Player Identification ----------
   function generateGuestId() {
     const wizardNames = [
@@ -908,7 +933,6 @@
     const player = getStoredPlayerName() || generateGuestId();
     document.getElementById('playerDisplay').textContent = player;
     document.getElementById('playerNameInput').value = player.includes('-') ? '' : player;
-    // Toggle feedback panel visibility
     const feedbackPanel = document.getElementById('feedback-panel');
     if (player === 'Admin') {
       feedbackPanel.style.display = 'block';
@@ -931,13 +955,11 @@
       const nameToStore = input || generateGuestId();
       setStoredPlayerName(nameToStore);
       
-      // Show magical name change effect
       const messageEl = document.getElementById('message');
       messageEl.textContent = `✨ You are now ${nameToStore} the Word Wizard! ✨`;
       messageEl.style.color = 'var(--accent)';
       messageEl.style.fontWeight = 'bold';
       
-      // Create confetti effect
       createConfetti(30);
     });
   })();
@@ -957,7 +979,6 @@
       confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
       document.body.appendChild(confetti);
       
-      // Remove confetti after animation
       setTimeout(() => {
         confetti.remove();
       }, 2000);
@@ -967,7 +988,7 @@
   // Generate random letters of length between 3 and 6
   function randomLetters() {
     const letters = "abcdefghijklmnopqrstuvwxyz";
-    const length = 3 + Math.floor(Math.random() * 4); // 3 to 6 letters
+    const length = 3 + Math.floor(Math.random() * 4);
     let result = "";
     for (let i = 0; i < length; i++) {
       result += letters.charAt(Math.floor(Math.random() * letters.length));
@@ -975,7 +996,7 @@
     return result;
   }
 
-  // Check if guess only uses letters from scrambledLetters (counts respected)
+  // Check if guess only uses letters from scrambledLetters
   function usesOnlyLetters(guess, letters) {
     const letterCount = {};
     for (const l of letters) {
@@ -1016,8 +1037,6 @@
       if (Array.isArray(data) && data.length > 0) {
         const meanings = data[0].meanings;
         let defs = [];
-
-        // Loop through meanings until we have 2 definitions
         for (let meaning of meanings) {
           for (let defObj of meaning.definitions) {
             defs.push(defObj.definition);
@@ -1025,7 +1044,6 @@
           }
           if (defs.length === 2) break;
         }
-
         return defs.length > 0 ? defs : null;
       }
       return null;
@@ -1046,7 +1064,7 @@
 
   // Handle hint purchase
   async function purchaseHint() {
-    if (isHintProcessing) return; // Prevent multiple clicks
+    if (isHintProcessing) return;
     isHintProcessing = true;
     const hintBtn = document.getElementById('hintBtn');
     hintBtn.disabled = true;
@@ -1093,7 +1111,6 @@
     const minLength = 2;
     const maxLength = letters.length;
     
-    // Simple word list for common short words
     const commonWords = [
       'a', 'an', 'as', 'at', 'be', 'by', 'do', 'go', 'he', 'if', 'in', 'is', 'it', 'me', 'no', 'of', 'on', 'or', 'so', 'to', 'up', 'us', 'we',
       'act', 'add', 'age', 'aim', 'air', 'all', 'and', 'ant', 'any', 'arm', 'art', 'ask', 'bad', 'bag', 'bar', 'bat', 'bed', 'bee', 'bet', 'big', 'bit', 
@@ -1115,7 +1132,6 @@
       'true', 'turn', 'type', 'very', 'view', 'wait', 'walk', 'wall', 'want', 'week', 'well', 'went', 'what', 'when', 'will', 'wind', 'with', 'work', 'year'
     ];
 
-    // Filter words that can be made with the given letters
     for (const word of commonWords) {
       if (word.length >= minLength && word.length <= maxLength && usesOnlyLetters(word, letters)) {
         if (!foundWords.has(word)) {
@@ -1124,7 +1140,6 @@
       }
     }
 
-    // Verify with API for accuracy
     const validWords = [];
     for (const word of possibleWords) {
       if (await isValidEnglishWord(word)) {
@@ -1204,7 +1219,6 @@
       container.appendChild(entry);
     });
 
-    // Pagination controls (only if enough words)
     if (wordsArray.length > wordsPerPage) {
       const paginationDiv = document.createElement("div");
       paginationDiv.className = "pagination";
@@ -1254,7 +1268,6 @@
       messageEl.textContent = "Your spell uses forbidden letters!";
       messageEl.style.color = 'var(--danger)';
       
-      // Shake animation for wrong letters
       lettersEl.style.animation = 'shake 0.5s';
       setTimeout(() => {
         lettersEl.style.animation = '';
@@ -1284,19 +1297,17 @@
         messageEl.innerHTML = `✨ <strong>"${guess.toUpperCase()}"</strong> is a powerful spell! You earned ${points} magic point${points > 1 ? "s" : ""}! ✨`;
         messageEl.style.color = 'var(--success)';
         
-        // Bounce animation for score
         const scoreEl = document.getElementById("score");
         scoreEl.classList.add('bounce');
         setTimeout(() => {
           scoreEl.classList.remove('bounce');
         }, 1000);
         
-        // Confetti for success
         createConfetti(20);
 
         foundWords.set(guess, null);
         renderFoundWords();
-        setTimeout(generateLetters, 2000); // Delay new letters to show success
+        setTimeout(generateLetters, 2000);
       }
     } else {
       messageEl.textContent = `The spell "${guess.toUpperCase()}" is not in the ancient texts!`;
@@ -1320,15 +1331,14 @@
   document.getElementById("feedbackBtn").addEventListener("click", showFeedbackForm);
   document.getElementById("feedback-submit").addEventListener("click", submitFeedback);
   document.getElementById("feedback-cancel").addEventListener("click", hideFeedbackForm);
+  document.getElementById("toggleRulesBtn").addEventListener("click", toggleRules);
   
-  // Close feedback modal with Escape key
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && document.getElementById('feedback-modal').style.display === 'flex') {
       hideFeedbackForm();
     }
   });
   
-  // Also check word on Enter key
   document.getElementById("guess").addEventListener("keypress", function(e) {
     if (e.key === "Enter") {
       checkWord();
@@ -1341,7 +1351,6 @@
   renderFoundWords();
   startTimer();
 
-  // Stop timer when page unloads to prevent memory leaks
   window.addEventListener('unload', stopTimer);
 </script>
 </body>
