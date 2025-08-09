@@ -141,6 +141,14 @@
 
   <div id="game-container">
     <h1>Subset Letter Word Game</h1>
+    <!-- Player / Login area (paste inside #game-container) -->
+<div id="player-area" style="margin-bottom:12px; text-align:center;">
+  <input type="text" id="playerNameInput" placeholder="Enter username (or leave blank for guest)" style="width:220px; padding:8px;"/>
+  <button id="setNameBtn" style="padding:8px 12px; margin-left:6px;">Set Name</button>
+  <div id="current-player" style="margin-top:8px; font-size:0.9rem; color:#333;">
+    Playing as: <span id="playerDisplay" style="font-weight:700;">Guest</span>
+  </div>
+</div>
     <div id="letters">---</div>
     <input type="text" id="guess" placeholder="Your word guess" autocomplete="off" />
     <div>
@@ -185,6 +193,55 @@
   let scrambledLetters = "";
   let score = 0;
   const foundWords = new Map(); // Store words & their definitions (or null if not fetched)
+
+  // ---------- Player Identification (Phase 1) ----------
+function generateGuestId() {
+  // simple guest id — e.g., Guest-7f3a
+  return 'Guest-' + Math.random().toString(36).slice(2, 6);
+}
+
+function getStoredPlayerName() {
+  return localStorage.getItem('wordgame_playerName') || null;
+}
+
+function setStoredPlayerName(name) {
+  if (!name || !name.trim()) {
+    // If blank, create a guest id and store it
+    name = generateGuestId();
+  }
+  localStorage.setItem('wordgame_playerName', name);
+  updatePlayerDisplay();
+  return name;
+}
+
+function updatePlayerDisplay() {
+  const player = getStoredPlayerName() || generateGuestId();
+  document.getElementById('playerDisplay').textContent = player;
+  // Make sure input shows the current name (optional)
+  document.getElementById('playerNameInput').value = player.startsWith('Guest-') ? '' : player;
+}
+
+// Initialize player on load
+(function initPlayer() {
+  // If no stored player, create guest id
+  if (!getStoredPlayerName()) {
+    setStoredPlayerName(generateGuestId());
+  } else {
+    updatePlayerDisplay();
+  }
+
+  // Wire up button
+  document.getElementById('setNameBtn').addEventListener('click', () => {
+    const input = document.getElementById('playerNameInput').value.trim();
+    // If user typed nothing, we'll treat as guest (generate)
+    const nameToStore = input || generateGuestId();
+    setStoredPlayerName(nameToStore);
+    // Optional toast/message
+    const messageEl = document.getElementById('message');
+    if (messageEl) messageEl.textContent = `Playing as: ${nameToStore}`;
+  });
+})();
+
 
   // Generate random letters of length between 3 and 6
   function randomLetters() {
@@ -389,6 +446,7 @@
         score += points;
         document.getElementById("score").textContent = "Score: " + score;
         messageEl.textContent = `✅ "${guess.toUpperCase()}" is valid! You earned ${points} point${points > 1 ? "s" : ""}!`;
+        const playerName = getStoredPlayerName() || 'Guest';
 
         if (!foundWords.has(guess)) {
           foundWords.set(guess, null);
