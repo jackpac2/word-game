@@ -80,6 +80,78 @@
       margin-right: 8px;
     }
     
+    /* Feedback Modal */
+    #feedback-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    #feedback-form {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+      font-family: 'Nunito', sans-serif;
+      position: relative;
+    }
+    
+    #feedback-form h2 {
+      font-family: 'Fredoka One', cursive;
+      color: var(--primary);
+      margin-bottom: 20px;
+    }
+    
+    #feedback-form label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 700;
+      color: var(--dark);
+    }
+    
+    #feedback-form textarea,
+    #feedback-form input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 2px solid var(--secondary);
+      border-radius: 8px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 1rem;
+    }
+    
+    #feedback-form textarea {
+      height: 100px;
+      resize: vertical;
+    }
+    
+    #feedback-form .button-group {
+      justify-content: flex-end;
+    }
+    
+    #feedback-form button {
+      padding: 10px 20px;
+      font-size: 1rem;
+    }
+    
+    #feedback-submit {
+      background: var(--success);
+    }
+    
+    #feedback-cancel {
+      background: var(--danger);
+    }
+    
     /* Decorative elements */
     .game-bg {
       position: absolute;
@@ -288,6 +360,10 @@
       box-shadow: none;
     }
     
+    #feedbackBtn {
+      background: var(--primary);
+    }
+    
     .toggle-btn {
       background: var(--primary);
       padding: 8px 15px;
@@ -378,21 +454,32 @@
     
     /* Found Words Panel */
     #found-words-panel {
-      flex-grow: 1;
-      overflow-y: auto;
       background: white;
       padding: 20px;
       border-radius: 15px;
+      margin-bottom: 20px;
       box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
     
-    .word-entry {
+    /* Feedback Panel */
+    #feedback-panel {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      display: none;
+      flex-grow: 1;
+      overflow-y: auto;
+    }
+    
+    .word-entry, .feedback-entry {
       border-bottom: 2px dotted var(--secondary);
       padding: 15px 0;
       transition: all 0.3s ease;
     }
     
-    .word-entry:hover {
+    .word-entry:hover, .feedback-entry:hover {
       background: rgba(162, 155, 254, 0.1);
     }
     
@@ -508,6 +595,11 @@
         font-size: 1rem;
         padding: 8px 15px;
       }
+      
+      #feedback-form {
+        width: 95%;
+        padding: 15px;
+      }
     }
     
     @media (max-width: 500px) {
@@ -568,11 +660,29 @@
     <div class="button-group">
       <button id="checkBtn">Check Word</button>
       <button id="newBtn">New Letters</button>
-      <button id="hintBtn">Hint (💰1)</button>
+      <button id="hintBtn">Hint</button>
+      <button id="feedbackBtn">Send Feedback</button>
     </div>
     
     <div id="score">Score: 0</div>
     <div id="message"></div>
+    
+    <!-- Feedback Modal -->
+    <div id="feedback-modal">
+      <div id="feedback-form">
+        <h2>Cast Your Feedback Spell</h2>
+        <label for="feedback-message">Your Magical Idea:</label>
+        <textarea id="feedback-message" placeholder="Share your suggestions..." required aria-label="Feedback message"></textarea>
+        <label for="feedback-name">Name (optional):</label>
+        <input type="text" id="feedback-name" placeholder="Your wizard name..." aria-label="Your name (optional)" />
+        <label for="feedback-email">Email (optional):</label>
+        <input type="email" id="feedback-email" placeholder="Your email..." aria-label="Your email (optional)" />
+        <div class="button-group">
+          <button id="feedback-submit">Submit Feedback</button>
+          <button id="feedback-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="side-panels">
@@ -594,6 +704,7 @@
         <li>🔍 Spend 1 dollar for a hint (reveals a possible word)</li>
         <li>📖 Words checked against a magical dictionary</li>
         <li>📚 Found words appear below with their secrets</li>
+        <li>📢 Share your magical ideas with the feedback spell!</li>
       </ul>
     </div>
 
@@ -601,6 +712,13 @@
       <h2>Spellbook</h2>
       <div id="found-words-list">
         <!-- Found words will appear here -->
+      </div>
+    </div>
+
+    <div id="feedback-panel">
+      <h2>Feedback Spellbook</h2>
+      <div id="feedback-list">
+        <!-- Feedback entries will appear here -->
       </div>
     </div>
   </div>
@@ -688,6 +806,80 @@
     localStorage.setItem('wordgame_money', money);
   }
 
+  // ---------- Feedback Logic ----------
+  function loadFeedback() {
+    const storedFeedback = localStorage.getItem('wordgame_feedback');
+    return storedFeedback ? JSON.parse(storedFeedback) : [];
+  }
+
+  function saveFeedback(feedback) {
+    const feedbackList = loadFeedback();
+    feedbackList.push(feedback);
+    localStorage.setItem('wordgame_feedback', JSON.stringify(feedbackList));
+    if (getStoredPlayerName() === 'Admin') {
+      renderFeedback();
+    }
+  }
+
+  function renderFeedback() {
+    const feedbackList = loadFeedback();
+    const container = document.getElementById('feedback-list');
+    container.innerHTML = '';
+    if (feedbackList.length === 0) {
+      container.textContent = 'No feedback spells cast yet!';
+      return;
+    }
+    feedbackList.forEach(f => {
+      const entry = document.createElement('div');
+      entry.className = 'feedback-entry';
+      entry.innerHTML = `<strong>${f.name} (${new Date(f.timestamp).toLocaleString()}):</strong> ${f.message}<br><em>Email: ${f.email}</em>`;
+      container.appendChild(entry);
+    });
+  }
+
+  function showFeedbackForm() {
+    document.getElementById('feedback-modal').style.display = 'flex';
+    document.getElementById('feedback-message').focus();
+  }
+
+  function hideFeedbackForm() {
+    document.getElementById('feedback-modal').style.display = 'none';
+    document.getElementById('feedback-message').value = '';
+    document.getElementById('feedback-name').value = '';
+    document.getElementById('feedback-email').value = '';
+  }
+
+  function submitFeedback() {
+    const message = document.getElementById('feedback-message').value.trim();
+    const name = document.getElementById('feedback-name').value.trim();
+    const email = document.getElementById('feedback-email').value.trim();
+    const messageEl = document.getElementById('message');
+
+    if (!message) {
+      messageEl.textContent = 'Please share your magical idea!';
+      messageEl.style.color = 'var(--danger)';
+      return;
+    }
+
+    const feedback = {
+      message,
+      name: name || 'Anonymous Wizard',
+      email: email || 'N/A',
+      timestamp: new Date().toISOString()
+    };
+
+    saveFeedback(feedback);
+    hideFeedbackForm();
+    messageEl.textContent = '✨ Your feedback spell has been cast! Thank you, Wizard! ✨';
+    messageEl.style.color = 'var(--success)';
+    createConfetti(20);
+
+    setTimeout(() => {
+      messageEl.textContent = '';
+      messageEl.style.color = '';
+    }, 3000);
+  }
+
   // ---------- Player Identification ----------
   function generateGuestId() {
     const wizardNames = [
@@ -716,6 +908,14 @@
     const player = getStoredPlayerName() || generateGuestId();
     document.getElementById('playerDisplay').textContent = player;
     document.getElementById('playerNameInput').value = player.includes('-') ? '' : player;
+    // Toggle feedback panel visibility
+    const feedbackPanel = document.getElementById('feedback-panel');
+    if (player === 'Admin') {
+      feedbackPanel.style.display = 'block';
+      renderFeedback();
+    } else {
+      feedbackPanel.style.display = 'none';
+    }
   }
 
   // Initialize player on load
@@ -1117,6 +1317,16 @@
   document.getElementById("checkBtn").addEventListener("click", checkWord);
   document.getElementById("newBtn").addEventListener("click", generateLetters);
   document.getElementById("hintBtn").addEventListener("click", purchaseHint);
+  document.getElementById("feedbackBtn").addEventListener("click", showFeedbackForm);
+  document.getElementById("feedback-submit").addEventListener("click", submitFeedback);
+  document.getElementById("feedback-cancel").addEventListener("click", hideFeedbackForm);
+  
+  // Close feedback modal with Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('feedback-modal').style.display === 'flex') {
+      hideFeedbackForm();
+    }
+  });
   
   // Also check word on Enter key
   document.getElementById("guess").addEventListener("keypress", function(e) {
