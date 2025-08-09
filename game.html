@@ -47,6 +47,39 @@
       overflow: hidden;
     }
     
+    /* Money and Timer Display */
+    .top-left-display {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 2;
+    }
+    
+    #money-display, #timer-display {
+      background: white;
+      padding: 10px 20px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.2rem;
+      color: var(--dark);
+      display: flex;
+      align-items: center;
+    }
+    
+    #money-display::before {
+      content: '💰';
+      margin-right: 8px;
+    }
+    
+    #timer-display::before {
+      content: '⏳';
+      margin-right: 8px;
+    }
+    
     /* Decorative elements */
     .game-bg {
       position: absolute;
@@ -233,6 +266,28 @@
       background: var(--accent);
     }
     
+    #hintBtn {
+      background: var(--warning);
+      color: var(--dark);
+      position: relative;
+      padding-right: 50px;
+    }
+    
+    #hintBtn::after {
+      content: '💰1';
+      position: absolute;
+      right: 15px;
+      font-size: 0.9rem;
+      color: var(--dark);
+    }
+    
+    #hintBtn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
     .toggle-btn {
       background: var(--primary);
       padding: 8px 15px;
@@ -394,7 +449,7 @@
     }
     
     .bounce {
-      animation: bounce 0.5s ease infinite;
+      animation: bounce 0.5s ease;
     }
     
     @keyframes confetti {
@@ -410,6 +465,12 @@
       opacity: 1;
       animation: confetti 2s ease forwards;
       z-index: 1000;
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); border-color: var(--primary); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); border-color: var(--danger); }
+      20%, 40%, 60%, 80% { transform: translateX(5px); border-color: var(--danger); }
     }
     
     /* Responsive Design */
@@ -437,6 +498,16 @@
       h1 {
         font-size: 2rem;
       }
+      
+      .top-left-display {
+        top: 10px;
+        left: 10px;
+      }
+      
+      #money-display, #timer-display {
+        font-size: 1rem;
+        padding: 8px 15px;
+      }
     }
     
     @media (max-width: 500px) {
@@ -459,12 +530,20 @@
       button {
         width: 80%;
       }
+      
+      #money-display, #timer-display {
+        font-size: 0.9rem;
+        padding: 6px 12px;
+      }
     }
   </style>
 </head>
 <body>
-
   <div id="game-container">
+    <div class="top-left-display">
+      <div id="money-display" aria-live="polite">0</div>
+      <div id="timer-display" aria-live="polite">00:00</div>
+    </div>
     <div class="game-bg game-bg-1">✏️</div>
     <div class="game-bg game-bg-2">🔠</div>
     
@@ -489,6 +568,7 @@
     <div class="button-group">
       <button id="checkBtn">Check Word</button>
       <button id="newBtn">New Letters</button>
+      <button id="hintBtn">Hint (💰1)</button>
     </div>
     
     <div id="score">Score: 0</div>
@@ -510,6 +590,8 @@
             <li>6 letters: 4 points</li>
           </ul>
         </li>
+        <li>💰 Earn 1 dollar every 5 minutes of casting spells</li>
+        <li>🔍 Spend 1 dollar for a hint (reveals a possible word)</li>
         <li>📖 Words checked against a magical dictionary</li>
         <li>📚 Found words appear below with their secrets</li>
       </ul>
@@ -528,7 +610,83 @@
   const wordsPerPage = 5;
   let scrambledLetters = "";
   let score = 0;
+  let money = 0;
+  let isHintProcessing = false; // Lock for hint button
+  let gameStartTime = null;
+  let elapsedTime = 0;
+  let timerInterval = null;
+  const MONEY_INTERVAL = 300000; // 5 minutes in milliseconds
   const foundWords = new Map(); // Store words & their definitions (or null if not fetched)
+
+  // ---------- Timer and Money Logic ----------
+  function startTimer() {
+    // Load or initialize game start time
+    const storedStartTime = localStorage.getItem('wordgame_startTime');
+    gameStartTime = storedStartTime ? parseInt(storedStartTime, 10) : Date.now();
+    localStorage.setItem('wordgame_startTime', gameStartTime);
+
+    // Calculate any missed money intervals since last session
+    const currentTime = Date.now();
+    const timeSinceStart = currentTime - gameStartTime;
+    const missedIntervals = Math.floor(timeSinceStart / MONEY_INTERVAL);
+    if (missedIntervals > 0) {
+      money += missedIntervals;
+      localStorage.setItem('wordgame_money', money);
+      document.getElementById('money-display').textContent = money;
+      // Adjust start time to account for awarded intervals
+      gameStartTime += missedIntervals * MONEY_INTERVAL;
+      localStorage.setItem('wordgame_startTime', gameStartTime);
+    }
+
+    // Start timer
+    timerInterval = setInterval(() => {
+      const currentTime = Date.now();
+      elapsedTime = (currentTime - gameStartTime) % MONEY_INTERVAL;
+      updateTimerDisplay();
+
+      // Check if 5 minutes have passed
+      if (elapsedTime >= MONEY_INTERVAL - 1000) { // Within 1 second of interval
+        money += 1;
+        const moneyEl = document.getElementById('money-display');
+        moneyEl.textContent = money;
+        moneyEl.classList.add('bounce');
+        setTimeout(() => moneyEl.classList.remove('bounce'), 1000);
+        localStorage.setItem('wordgame_money', money);
+        console.log(`Money earned: ${money} dollars after ${Math.floor((currentTime - gameStartTime) / 60000)} minutes`);
+
+        // Reset timer for next interval
+        gameStartTime += MONEY_INTERVAL;
+        localStorage.setItem('wordgame_startTime', gameStartTime);
+        elapsedTime = 0;
+        updateTimerDisplay();
+      }
+    }, 1000);
+  }
+
+  function updateTimerDisplay() {
+    const seconds = Math.floor((elapsedTime / 1000) % 60);
+    const minutes = Math.floor((elapsedTime / 1000 / 60) % 60);
+    const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    document.getElementById('timer-display').textContent = formattedTime;
+  }
+
+  function stopTimer() {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+  }
+
+  // Load money from localStorage
+  function loadMoney() {
+    money = parseInt(localStorage.getItem('wordgame_money') || '0', 10);
+    document.getElementById('money-display').textContent = money;
+  }
+
+  // Save money to localStorage
+  function saveMoney() {
+    localStorage.setItem('wordgame_money', money);
+  }
 
   // ---------- Player Identification ----------
   function generateGuestId() {
@@ -636,10 +794,14 @@
   async function isValidEnglishWord(word) {
     try {
       const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
-      if (!response.ok) return false;
+      if (!response.ok) {
+        document.getElementById('message').textContent = 'The dictionary spirits are resting. Try again soon!';
+        return false;
+      }
       const data = await response.json();
       return Array.isArray(data) && data.length > 0;
     } catch {
+      document.getElementById('message').textContent = 'Lost connection to the ancient texts!';
       return false;
     }
   }
@@ -680,6 +842,97 @@
     if (len === 5) return 3;
     if (len === 6) return 4;
     return 0;
+  }
+
+  // Handle hint purchase
+  async function purchaseHint() {
+    if (isHintProcessing) return; // Prevent multiple clicks
+    isHintProcessing = true;
+    const hintBtn = document.getElementById('hintBtn');
+    hintBtn.disabled = true;
+    
+    const messageEl = document.getElementById('message');
+    if (money < 1) {
+      messageEl.textContent = 'Not enough magical dollars for a hint!';
+      messageEl.style.color = 'var(--danger)';
+      isHintProcessing = false;
+      hintBtn.disabled = false;
+      return;
+    }
+
+    money -= 1;
+    document.getElementById('money-display').textContent = money;
+    saveMoney();
+
+    messageEl.textContent = 'Consulting the oracle for a hint...';
+    messageEl.style.color = 'var(--dark)';
+
+    try {
+      const possibleWords = await findPossibleWords(scrambledLetters);
+      if (possibleWords.length === 0) {
+        messageEl.textContent = 'No hints available in the ancient texts!';
+        messageEl.style.color = 'var(--warning)';
+      } else {
+        const hintWord = possibleWords[Math.floor(Math.random() * possibleWords.length)];
+        messageEl.textContent = `🔍 Hint: Try "${hintWord.toUpperCase()}"!`;
+        messageEl.style.color = 'var(--success)';
+        createConfetti(10);
+      }
+    } catch {
+      messageEl.textContent = 'The oracle is silent. Try again later!';
+      messageEl.style.color = 'var(--danger)';
+    }
+
+    isHintProcessing = false;
+    hintBtn.disabled = false;
+  }
+
+  // Find possible words for hints
+  async function findPossibleWords(letters) {
+    const possibleWords = [];
+    const minLength = 2;
+    const maxLength = letters.length;
+    
+    // Simple word list for common short words
+    const commonWords = [
+      'a', 'an', 'as', 'at', 'be', 'by', 'do', 'go', 'he', 'if', 'in', 'is', 'it', 'me', 'no', 'of', 'on', 'or', 'so', 'to', 'up', 'us', 'we',
+      'act', 'add', 'age', 'aim', 'air', 'all', 'and', 'ant', 'any', 'arm', 'art', 'ask', 'bad', 'bag', 'bar', 'bat', 'bed', 'bee', 'bet', 'big', 'bit', 
+      'box', 'boy', 'bus', 'but', 'buy', 'can', 'car', 'cat', 'cut', 'day', 'den', 'did', 'die', 'dig', 'dip', 'dog', 'dot', 'dry', 'due', 'eat', 'end', 
+      'eye', 'fan', 'far', 'fat', 'few', 'fit', 'fix', 'fly', 'for', 'fun', 'get', 'got', 'had', 'has', 'hat', 'her', 'him', 'his', 'hit', 'hot', 'how', 
+      'ice', 'its', 'job', 'key', 'kid', 'law', 'lay', 'let', 'lie', 'lot', 'low', 'man', 'map', 'may', 'men', 'met', 'mix', 'new', 'not', 'now', 'odd', 
+      'off', 'old', 'one', 'our', 'out', 'own', 'pan', 'pay', 'pen', 'per', 'pet', 'put', 'ran', 'red', 'run', 'sad', 'saw', 'say', 'see', 'set', 'she', 
+      'sit', 'six', 'son', 'sun', 'ten', 'the', 'tie', 'top', 'try', 'two', 'use', 'war', 'was', 'way', 'web', 'wet', 'who', 'why', 'win', 'yes', 'yet', 
+      'you', 'able', 'acid', 'also', 'area', 'away', 'baby', 'back', 'ball', 'band', 'bank', 'base', 'bath', 'bear', 'beat', 'best', 'bill', 'bird', 'blue', 
+      'boat', 'body', 'book', 'both', 'cake', 'call', 'card', 'care', 'case', 'cash', 'city', 'club', 'cold', 'come', 'cook', 'cool', 'cost', 'dark', 'data', 
+      'date', 'deal', 'dear', 'deep', 'desk', 'door', 'draw', 'drug', 'easy', 'even', 'ever', 'face', 'fact', 'fall', 'fast', 'feel', 'file', 'fill', 'find', 
+      'fire', 'fish', 'five', 'food', 'foot', 'four', 'free', 'from', 'full', 'game', 'gate', 'gift', 'girl', 'give', 'good', 'grow', 'hair', 'half', 'hand', 
+      'hard', 'have', 'head', 'hear', 'heat', 'help', 'here', 'high', 'hold', 'home', 'hope', 'hour', 'idea', 'into', 'iron', 'join', 'jump', 'just', 'keep', 
+      'kill', 'kind', 'king', 'know', 'land', 'last', 'late', 'lead', 'left', 'life', 'like', 'line', 'list', 'live', 'long', 'look', 'lose', 'love', 'make', 
+      'many', 'mark', 'meet', 'mind', 'miss', 'move', 'much', 'must', 'name', 'near', 'need', 'next', 'nice', 'note', 'open', 'over', 'page', 'pain', 'pair', 
+      'park', 'part', 'pass', 'past', 'path', 'pick', 'plan', 'play', 'poor', 'post', 'pull', 'push', 'race', 'rain', 'rate', 'read', 'real', 'rest', 'ride', 
+      'ring', 'road', 'rock', 'room', 'rule', 'safe', 'sale', 'same', 'save', 'seat', 'sell', 'send', 'ship', 'shop', 'show', 'side', 'sign', 'site', 'size', 
+      'skin', 'sort', 'star', 'stay', 'step', 'stop', 'such', 'sure', 'take', 'talk', 'tell', 'test', 'than', 'that', 'then', 'they', 'this', 'time', 'tree', 
+      'true', 'turn', 'type', 'very', 'view', 'wait', 'walk', 'wall', 'want', 'week', 'well', 'went', 'what', 'when', 'will', 'wind', 'with', 'work', 'year'
+    ];
+
+    // Filter words that can be made with the given letters
+    for (const word of commonWords) {
+      if (word.length >= minLength && word.length <= maxLength && usesOnlyLetters(word, letters)) {
+        if (!foundWords.has(word)) {
+          possibleWords.push(word);
+        }
+      }
+    }
+
+    // Verify with API for accuracy
+    const validWords = [];
+    for (const word of possibleWords) {
+      if (await isValidEnglishWord(word)) {
+        validWords.push(word);
+      }
+    }
+
+    return validWords;
   }
 
   // Render found words list
@@ -764,7 +1017,7 @@
         renderFoundWords();
       };
 
-      const pageInfo = document.createElement("span");
+      const pageInfo = document.createElement("div");
       pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
       pageInfo.style.margin = "0 10px";
       pageInfo.style.display = "flex";
@@ -809,6 +1062,13 @@
       return;
     }
 
+    if (foundWords.has(guess)) {
+      messageEl.textContent = `"${guess.toUpperCase()}" is already in your spellbook!`;
+      messageEl.style.color = 'var(--warning)';
+      guessInput.value = "";
+      return;
+    }
+
     messageEl.textContent = "Consulting the dictionary spirits...";
     messageEl.style.color = 'var(--dark)';
 
@@ -834,12 +1094,9 @@
         // Confetti for success
         createConfetti(20);
 
-        if (!foundWords.has(guess)) {
-          foundWords.set(guess, null);
-          renderFoundWords();
-        }
-
-        generateLetters();
+        foundWords.set(guess, null);
+        renderFoundWords();
+        setTimeout(generateLetters, 2000); // Delay new letters to show success
       }
     } else {
       messageEl.textContent = `The spell "${guess.toUpperCase()}" is not in the ancient texts!`;
@@ -856,20 +1113,10 @@
     document.getElementById("message").style.color = '';
   }
 
-  // Add shake animation for CSS
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-      20%, 40%, 60%, 80% { transform: translateX(5px); }
-    }
-  `;
-  document.head.appendChild(style);
-
   // Event listeners
   document.getElementById("checkBtn").addEventListener("click", checkWord);
   document.getElementById("newBtn").addEventListener("click", generateLetters);
+  document.getElementById("hintBtn").addEventListener("click", purchaseHint);
   
   // Also check word on Enter key
   document.getElementById("guess").addEventListener("keypress", function(e) {
@@ -878,10 +1125,14 @@
     }
   });
 
-  // Start the game with some letters
+  // Start the game
+  loadMoney();
   generateLetters();
   renderFoundWords();
-</script>
+  startTimer();
 
+  // Stop timer when page unloads to prevent memory leaks
+  window.addEventListener('unload', stopTimer);
+</script>
 </body>
 </html>
